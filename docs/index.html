@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>3D GeoJSON Map with GSI Tiles</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/maplibre-gl@2.1.9/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@2.1.9/dist/maplibre-gl.css" rel="stylesheet" />
+    <script type="module">
+        import { encode as fastPngEncode } from 'https://cdn.jsdelivr.net/npm/fast-png@6.1.0/+esm';
+
+        const gsidem2terrainrgb = (r, g, b) => {
+            let height = r * 655.36 + g * 2.56 + b * 0.01;
+            if (r === 128 && g === 0 && b === 0) {
+                height = 0;
+            } else if (r >= 128) {
+                height -= 167772.16;
+            }
+            height += 100000;
+            height *= 10;
+            const tB = (height / 256 - Math.floor(height / 256)) * 256;
+            const tG = (Math.floor(height / 256) / 256 - Math.floor(Math.floor(height / 256) / 256)) * 256;
+            const tR = (Math.floor(Math.floor(height / 256) / 256) / 256 - Math.floor(Math.floor(Math.floor(height / 256) / 256) / 256)) * 256;
+            return [tR, tG, tB];
+        };
+
+        maplibregl.addProtocol('gsidem', (params, callback) => {
+            const image = new Image();
+            image.crossOrigin = '';
+            image.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const context = canvas.getContext('2d');
+                context.drawImage(image, 0, 0);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                for (let i = 0; i < imageData.data.length / 4; i++) {
+                    const tRGB = gsidem2terrainrgb(imageData.data[i * 4], imageData.data[i * 4 + 1], imageData.data[i * 4 + 2]);
+                    imageData.data[i * 4] = tRGB[0];
+                    imageData.data[i * 4 + 1] = tRGB[1];
+                    imageData.data[i * 4 + 2] = tRGB[2];
+                }
+                const pngData = fastPngEncode({ width: canvas.width, height: canvas.height, data: imageData.data });
+                callback(null, pngData.buffer, null, null);
+            };
+            image.src = params.url.replace('gsidem://', '');
+            return { cancel: () => {} };
+        });
+    </script>
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: {
+            "version": 8,
+            "sources": {
+                "raster-tiles": {
+                    "type": "raster",
+                    "tiles": [
+                        "https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png"
+                    ],
+                    "tileSize": 256
+                }
+            },
+            "layers": [
+                {
+                    "id": "simple-tiles",
+                    "type": "raster",
+                    "source": "raster-tiles",
+                    "minzoom": 0,
+                    "maxzoom": 18
+                }
+            ]
+        },
+        center: [135.0, 34.0],
+        zoom: 12,
+        pitch: 45,
+        bearing: -17.6,
+        antialias: true
+    });
+
+    map.on('load', function () {
+        const geojsonFiles = [
+            '00_Chiyogawa_line.geojson',
+            '01_Chiyogawa_diss.geojson',
+            '02_shinbukuro_diss.geojson',
+            '03_fukurogawa_diss.geojson',
+            '04_ooishi.geojson'
+        ];
+
+        geojsonFiles.forEach((file, index) => {
+            fetch(file)
+                .then(response => response.json())
+                .then(data => {
+                    map.addSource(`geojson-source-${index}`, {
+                        type: 'geojson',
+                        data: data
+                    });
+
+                    map.addLayer({
+                        id: `geojson-layer-${index}`,
+                        type: 'fill-extrusion',
+                        source: `geojson-source-${index}`,
+                        paint: {
+                            'fill-extrusion-color': '#888',
+                            'fill-extrusion-height': ['get', 'height'],
+                            'fill-extrusion-base': 0,
+                            'fill-extrusion-opacity': 0.6
+                        }
+                    });
+                });
+        });
+
+        map.addSource("gsidem", {
+            type: 'raster-dem',
+            tiles: [
+                'gsidem://https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png'
+            ],
+            attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html#dem" target="_blank">地理院タイル(標高タイル)</a>',
+            tileSize: 256
+        });
+
+        map.setTerrain({ 'source': 'gsidem', 'exaggeration': 1 });
+    });
+
+    const nav = new maplibregl.NavigationControl();
+    map.addControl(nav, 'top-left');
+</script>
+</body>
+</html>
