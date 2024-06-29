@@ -33,6 +33,10 @@
     <div id="menu"></div>
     <div id="map"></div>
     <script type="text/javascript">
+        // PMTilesプロトコルの設定
+        let protocol = new pmtiles.Protocol();
+        maplibregl.addProtocol("pmtiles", protocol.tile);
+
         // マップの初期化
         const map = new maplibregl.Map({
             container: 'map',
