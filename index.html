@@ -108,6 +108,27 @@
             // 標高タイルセット
             map.setTerrain({ 'source': 'gsidem', 'exaggeration': 1.5 });
 
+            // PMTilesソースを追加
+            map.addSource('chiyogawa', {
+                type: 'vector',
+                url: 'pmtiles://path/to/01_Chiyogawa.pmtiles'
+            });
+
+            map.addLayer({
+                id: 'chiyogawa-layer',
+                type: 'line',
+                source: 'chiyogawa',
+                'source-layer': 'layerName', // ここはPMTilesのレイヤ名に合わせて変更してください
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': '#FF0000',
+                    'line-width': 2
+                }
+            });
+
             // GeoJSONソースとレイヤを追加
             const geojsonFiles = [
                 { file: '00_Chiyogawa_line.geojson', type: 'line' },
