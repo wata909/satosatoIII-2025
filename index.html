@@ -33,7 +33,7 @@
     <div id="menu"></div>
     <div id="map"></div>
     <script type="text/javascript">
-        // addProtocolの設定
+        // PMTilesプロトコルの設定
         let protocol = new pmtiles.Protocol();
         maplibregl.addProtocol("pmtiles", protocol.tile);
 
@@ -108,10 +108,17 @@
             // 標高タイルセット
             map.setTerrain({ 'source': 'gsidem', 'exaggeration': 1.5 });
 
-            // PMTilesソースを追加
+            // PMTilesファイルのURL設定
+            const PMTILES_URL = "https://wata909.github.io/satosatoIII-2024/01_Chiyogawa.pmtiles";
+
+            // PMTilesソースの追加
+            const PMTilesSource = new pmtiles.PMTiles(PMTILES_URL);
+            protocol.add(PMTilesSource);
+
             map.addSource('chiyogawa', {
                 type: 'vector',
-                url: 'https://wata909.github.io/satosatoIII-2024/01_Chiyogawa.pmtiles'
+                url: 'pmtiles://' + PMTILES_URL,
+                attribution: '<a href="https://wata909.github.io/satosatoIII-2024/01_Chiyogawa.pmtiles" target="_blank">01_Chiyogawa</a>'
             });
 
             map.addLayer({
