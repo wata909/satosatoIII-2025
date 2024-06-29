@@ -1,6 +1,8 @@
+<!DOCTYPE html>
 <html>
+
 <head>
-    <title>国土地理院 標高タイル（DEM10B）</title>
+    <title>千代川流域図</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src='https://unpkg.com/maplibre-gl@3.4.1/dist/maplibre-gl.js'></script>
@@ -13,12 +15,22 @@
         }
 
         #map {
-            height: 100%;
+            height: 90vh;
             width: 100%;
+        }
+
+        #menu {
+            position: absolute;
+            background: #fff;
+            padding: 10px;
+            font-family: 'Arial', sans-serif;
+            z-index: 1;
         }
     </style>
 </head>
+
 <body>
+    <div id="menu"></div>
     <div id="map"></div>
     <script type="text/javascript">
         // addProtocolの設定
@@ -29,13 +41,13 @@
         const map = new maplibregl.Map({
             container: 'map',
             style: 'std.json',
-            zoom: 12.46,
+            zoom: 11.5,
             minZoom: 1,
             maxZoom: 23,
-            pitch: 73,
-            bearing: -36,
+            pitch: 43,
+            bearing: 160.7,
             maxPitch: 85,
-            center: [138.76069, 35.34967],
+            center: [134.273, 35.4486],
             hash: true,
             attributionControl: false,
         });
@@ -78,7 +90,7 @@
         map.addControl(
             new maplibregl.TerrainControl({
                 source: 'gsidem',
-                exaggeration: 1 // 標高を強調する倍率
+                exaggeration: 1.5 // 標高を強調する倍率を1.5倍に変更
             })
         );
 
@@ -94,38 +106,60 @@
             });
 
             // 標高タイルセット
-            map.setTerrain({ 'source': 'gsidem', 'exaggeration': 1 });
+            map.setTerrain({ 'source': 'gsidem', 'exaggeration': 1.5 });
 
-            // GeoJSONソースを追加
+            // GeoJSONソースとレイヤを追加
             const geojsonFiles = [
-                '00_Chiyogawa_line.geojson',
-                '01_Chiyogawa_diss.geojson',
-                '02_shinbukuro_diss.geojson',
-                '03_fukurogawa_diss.geojson',
-                '04_ooishi.geojson'
+                { file: '00_Chiyogawa_line.geojson', type: 'line' },
+                { file: '01_Chiyogawa_diss.geojson', type: 'fill' },
+                { file: '02_shinbukuro_diss.geojson', type: 'fill' },
+                { file: '03_fukurogawa_diss.geojson', type: 'fill' },
+                { file: '04_ooishi.geojson', type: 'fill' }
             ];
 
-            geojsonFiles.forEach((file, index) => {
+            geojsonFiles.forEach((item, index) => {
                 map.addSource(`geojson-${index}`, {
                     type: 'geojson',
-                    data: file
+                    data: item.file
                 });
 
                 map.addLayer({
                     id: `layer-${index}`,
-                    type: 'line',
+                    type: item.type,
                     source: `geojson-${index}`,
-                    layout: {
+                    layout: item.type === 'line' ? {
                         'line-join': 'round',
                         'line-cap': 'round'
-                    },
-                    paint: {
+                    } : {},
+                    paint: item.type === 'line' ? {
                         'line-color': `hsl(${index * 60}, 100%, 50%)`,
                         'line-width': 3
+                    } : {
+                        'fill-color': `hsl(${index * 60}, 100%, 50%)`,
+                        'fill-opacity': 0.6
                     }
                 });
+
+                // メニューにチェックボックスを追加
+                const menu = document.getElementById('menu');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `toggle-${index}`;
+                checkbox.checked = true;
+                checkbox.onchange = function(e) {
+                    map.setLayoutProperty(`layer-${index}`, 'visibility', e.target.checked ? 'visible' : 'none');
+                };
+
+                const label = document.createElement('label');
+                label.setAttribute('for', `toggle-${index}`);
+                label.textContent = item.file;
+
+                menu.appendChild(checkbox);
+                menu.appendChild(label);
+                menu.appendChild(document.createElement('br'));
             });
         });
     </script>
 </body>
+
 </html>
