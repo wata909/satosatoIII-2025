@@ -33,10 +33,6 @@
     <div id="menu"></div>
     <div id="map"></div>
     <script type="text/javascript">
-        // PMTilesプロトコルの設定
-        let protocol = new pmtiles.Protocol();
-        maplibregl.addProtocol("pmtiles", protocol.tile);
-
         // マップの初期化
         const map = new maplibregl.Map({
             container: 'map',
@@ -108,24 +104,16 @@
             // 標高タイルセット
             map.setTerrain({ 'source': 'gsidem', 'exaggeration': 1.5 });
 
-            // PMTilesファイルのURL設定
-            const PMTILES_URL = "https://wata909.github.io/satosatoIII-2024/01_Chiyogawa.pmtiles";
-
-            // PMTilesソースの追加
-            const PMTilesSource = new pmtiles.PMTiles(PMTILES_URL);
-            protocol.add(PMTilesSource);
-
+            // 01_Chiyogawa.geojsonソースの追加
             map.addSource('chiyogawa', {
-                type: 'vector',
-                url: 'pmtiles://' + PMTILES_URL,
-                attribution: '<a href="https://wata909.github.io/satosatoIII-2024/01_Chiyogawa.pmtiles" target="_blank">01_Chiyogawa</a>'
+                type: 'geojson',
+                data: '01_Chiyogawa.geojson'
             });
 
             map.addLayer({
                 id: 'chiyogawa-layer',
                 type: 'line',
                 source: 'chiyogawa',
-                'source-layer': '01_Chiyogawa', // ここはPMTilesのレイヤ名に合わせて変更してください
                 layout: {
                     'line-join': 'round',
                     'line-cap': 'round'
