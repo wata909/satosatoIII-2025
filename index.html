@@ -25,6 +25,8 @@
             padding: 10px;
             font-family: 'Arial', sans-serif;
             z-index: 1;
+            max-height: 80vh;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -106,17 +108,41 @@
             });
 
             // 標高タイルセット
-            map.setTerrain({ 'source': 'gsidem', 'exaggeration': 3 });
+            map.setTerrain({ 'source': 'gsidem', 'exaggeration': 2.5 });
+
+            // 色盲の人にも見えやすい色のパレット
+            const colorPalette = [
+                '#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2',
+                '#D55E00', '#CC79A7', '#999999', '#E69F00', '#56B4E9',
+                '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7'
+            ];
 
             // GeoJSONソースとレイヤを追加
             const geojsonFiles = [
-                { file: '00_Chiyogawa_line.geojson', type: 'line', label: '千代川流域河川', color: '#117733', lineWidth: 2, visible: true },
-                { file: '01_Chiyogawa_diss.geojson', type: 'fill', label: '千代川流域', color: '#88CCEE', visible: true },
+                { file: '01_Chiyogawa_diss.geojson', type: 'fill', label: '千代川流域', color: '#88CCEE', visible: false },
                 { file: '02_shinbukuro_diss.geojson', type: 'fill', label: '新袋流域', color: '#DDCC77', visible: false },
                 { file: '03_fukurogawa_diss.geojson', type: 'fill', label: '袋川流域', color: '#CC6677', visible: false },
                 { file: '04_ooishi.geojson', type: 'fill', label: '大石川流域', color: '#332288', visible: false },
-                { file: '01_Chiyogawa.geojson', type: 'line', label: '千代川個別支流域', color: '#999933', lineWidth: 2, visible: true }
+                { file: '02_0.geojson', type: 'fill', label: '千代川本流', color: '#88CCEE', visible: true }
             ];
+
+            // 02_1.geojsonから02_15.geojsonまでを追加
+            for (let i = 1; i <= 15; i++) {
+                geojsonFiles.push({
+                    file: `02_${i}.geojson`,
+                    type: 'fill',
+                    label: `支流域 ${i}`,
+                    color: colorPalette[i - 1],
+                    visible: true
+                });
+            }
+
+            // 河川と支流域界のラインを最後に追加
+            geojsonFiles.push(
+                { file: '00_Chiyogawa_line.geojson', type: 'line', label: '千代川流域河川', color: '#0000FF', lineWidth: 0.5, visible: true },
+                { file: '01_Chiyogawa.geojson', type: 'line', label: '支流域界', color: '#000000', lineWidth: 0.1, visible: true }
+            );
+
 
             geojsonFiles.forEach((item, index) => {
                 map.addSource(`geojson-${index}`, {
@@ -137,7 +163,7 @@
                         'line-width': item.lineWidth || 3
                     } : {
                         'fill-color': item.color,
-                        'fill-opacity': 0.6
+                        'fill-opacity': 0.3
                     }
                 });
 
