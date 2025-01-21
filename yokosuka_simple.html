@@ -26,9 +26,9 @@
             sources: {
                 osm: {
                     type: 'raster',
-                    tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                    tiles: ['https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'], //衛星写真
                     tileSize: 256,
-                    attribution: '&copy; OpenStreetMap Contributors',
+                    attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
                     maxzoom: 19
                 },
                 // Use a different source for terrain and hillshade layers, to improve render quality
